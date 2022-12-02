@@ -1,0 +1,42 @@
+normal
+	mean:
+		mean: 0.000349
+		variance: 0.100076
+	median:
+		mean: 0.000526
+		variance: 0.124165
+	huber:
+		mean: -0.000103
+		variance: 0.086386
+	two_step:
+		mean: 0.000938
+		variance: 0.103556
+
+cauchy
+	mean:
+		mean: 3.065417
+		variance: 261.892946
+	median:
+		mean: 0.001232
+		variance: 0.158115
+	huber:
+		mean: -0.000787
+		variance: 0.104246
+	two_step:
+		mean: -0.004233
+		variance: 0.191292
+
+combination
+	mean:
+		mean: -0.058172
+		variance: 4.036301
+	median:
+		mean: -0.001447
+		variance: 0.122320
+	huber:
+		mean: -0.000559
+		variance: 0.086986
+	two_step:
+		mean: -0.001300
+		variance: 0.103517
+
