@@ -58,7 +58,7 @@ def scrapper():
 
 def task2():
     # scrapper()
-    x, y = map(np.array, zip(*map(lambda l: (lambda y, t: (int(y), float(t)))(*l.split()), open("med_year_temps.txt"))))
+    x, y = map(np.array, zip(*map(lambda l: (lambda y, t: (int(y), float(t)))(*l.split()), open("l20/med_year_temps.txt"))))
 
     poly_degree = 6
     poly = preprocessing.PolynomialFeatures(degree=poly_degree)
