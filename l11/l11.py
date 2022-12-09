@@ -48,7 +48,7 @@ def scrapper():
             f.write("\n")
 
 
-def read_data(fname="med_temps.txt"):
+def read_data(fname="l11/med_temps.txt"):
     from operator import methodcaller as m
     return np.array(sum(map(m("split"), open(fname)), []), dtype=float)
 
