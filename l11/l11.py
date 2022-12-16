@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy
+from l9 import moving_median, turns, kandell
+from l10 import moving_exponent
 
 
 def prony(m, xs):
@@ -36,8 +37,9 @@ def scrapper():
     site = "http://www.pogodaiklimat.ru/monitor.php?id=26063&month={}&year={}"
 
     d = []
-    for (m, y) in chain.from_iterable(
-            starmap(product, ((range(9, 13), (2020,)), (range(1, 13), (2021,)), (range(1, 9), (2022,))))):
+    *ys, = map(lambda y: (y,), range(2000, 2023))
+    ms = [range(11, 13), *[range(1, 13)] * (len(ys) - 2), range(1, 12)]
+    for (m, y) in chain.from_iterable(starmap(product, zip(ms, ys))):
         soup = BeautifulSoup(requests.get(site.format(m, y)).content, "html.parser")
         *meds, = filter(None, map(lambda tr: tr.find_all("td")[2].text, soup.find("table").find_all("tr")[2:]))
         d.append(meds)
@@ -65,40 +67,27 @@ def estimate_coef(x, y):
     return (b1 := SS_xy / SS_xx), m_y - b1 * m_x
 
 
-def hurst(xs):
-    rang = np.arange(1, len(xs) + 1)
-    ran = np.arange(len(xs))
-    ra = np.arange(2, len(xs))
-
-    E = np.vectorize(lambda n: np.mean(xs[:n + 1]))(ran)  # 1..n
-    s = np.vectorize(lambda n: np.std(xs[:n + 1]))(ran)  # 1..n
-    cs = np.cumsum(xs)  # 1..n
-
-    _X = np.tile(cs, (len(xs), 1)).T - (rang * (np.tile(E, (len(rang), 1))).T).T
-    # X = lambda k, n: cs[k]-(k+1)*E[n]
-
-    R = np.vectorize(lambda n: (lambda r: max(r) - min(r))(_X[:n, n]))
-    ratio = np.vectorize(lambda n: R(n) / s[n])
-    y = lambda n: np.log(ratio(n))
-    z = np.log
-
-    Z = z(ra)
-    Y = y(ra)
-    H, c = estimate_coef(Z, Y)
-    print(f"H: {H:.4f} -> {'random persistent antipersistent'.split()[.53 < H < 1 or 2 * (0 < H < .47)]}")
-    plt.scatter(Z, Y, label="orig", color="m")
-    plt.plot(Z, Z * H + c, label="lin reg")
+def weather(xs, *, fmt=.6):
+    alpha = 0.03
+    w_size = 101
+    me = moving_exponent(xs, alpha)
+    mm = moving_median(xs, w_size)
+    for d, lab in zip((xs, me, mm),
+                      f"orig mov_exp({alpha:.2f}) mov_mean({w_size})".split()):
+        plt.plot(d, label=lab)
     plt.legend()
     plt.show()
 
-    fig, ax = plt.subplots(2, 1, figsize=(10, 6), tight_layout=True)
+    for name, trend in zip(("moving exponent", "moving median"), (me, mm)):
+        detrend = xs - trend
+        p, e_p = turns(detrend)
+        print(f"\t{name}:\n"
+              f"\t\tp: {p:{fmt}f}, E(p): {e_p:{fmt}f}\n"
+              f"\t\tKandell: {kandell(detrend):{fmt}f}")
+
     ff = np.fft.rfft(xs)
     freq = lambda e: np.fft.rfftfreq(e)
-    ax[0].stem(1 / 365 / freq(len(ff) * 2 - 1), np.abs(ff), markerfmt=" ")
-    ax[0].set_title("Fourier")
-    _, _, A, _ = prony(len(xs) // 2, xs)
-    ax[1].stem(freq(len(xs) - 1), A, markerfmt=" ")
-    ax[1].set_title("Prony")
+    plt.stem(freq(len(ff) * 2 - 1) / 365, np.abs(ff), markerfmt=" ")
     plt.show()
 
 
@@ -115,12 +104,12 @@ def task(n=200, h=.02, m=2):
     axs[1].stem(freq(len(A) * 2 - 1), A, markerfmt=" ")
     axs[1].set_title("Prony")
     plt.show()
-    # # _xs = np.array([np.sum(A*np.exp(-l*k+1j*(o*k+p))) for k in ps])
 
     # scrapper()
     # print(read_data())
-    hurst(read_data())
+    weather(read_data())
 
 
 if __name__ == "__main__":
+    # scrapper()
     task()
